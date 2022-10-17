@@ -20,6 +20,7 @@ def bulk_sync(
     skip_deletes=False,
     db_class=None,
     select_for_update_of=None,
+    ignore_conflicts_create=False,
 ):
     """Combine bulk create, update, and delete.  Make the DB match a set of in-memory objects.
 
@@ -41,6 +42,9 @@ def bulk_sync(
             be set automatically so is optional.
     `select_for_update_of`: (optional) Iterable passed directly to select_for_update `of` clause to control locking of related models.
             See https://docs.djangoproject.com/en/dev/ref/models/querysets/#select-for-update for more information.
+    `ignore_conflicts_create`: (optional) If True tells the database to ignore failure  to insert any rows that fail constraints such
+            as duplicate unique values.
+            See https://docs.djangoproject.com/en/dev/ref/models/querysets/#bulk-create
     """
 
     if db_class is None:
@@ -115,7 +119,7 @@ def bulk_sync(
                 existing_objs.append(new_obj)
 
         if not skip_creates:
-            db_class.objects.bulk_create(new_objs, batch_size=batch_size)
+            db_class.objects.bulk_create(new_objs, batch_size=batch_size, ignore_conflicts=ignore_conflicts_create)
 
         if not skip_updates:
             db_class.objects.bulk_update(existing_objs, fields=fields, batch_size=batch_size)
